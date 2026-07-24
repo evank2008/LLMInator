@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,12 +12,12 @@ import java.util.Base64;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 
 import com.anthropic.client.AnthropicClient;
 import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.models.messages.*;
 public class LLMInator {
-//TODO pass in image
 	
 	JFrame frame;
 	JPanel panel, topPanel, bottomPanel;
@@ -54,14 +55,31 @@ public class LLMInator {
 		chooserButton = new JButton("Choose Image");
 		chooserButton.addActionListener(e->{
 			JFileChooser jfc = new JFileChooser();
+			FileFilter ff = new FileFilter() {
+				public boolean accept(File f) {
+					String name = f.getName();
+					
+					return name.endsWith(".png")||name.endsWith(".jpg")||name.endsWith(".jpeg")||f.isDirectory();
+				}
+
+				@Override
+				public String getDescription() {
+					// TODO Auto-generated method stub
+					return "Image Files (.png, .jpg)";
+				}
+			};
+			jfc.setFileFilter(ff);
 			if(jfc.showOpenDialog(null)==JFileChooser.APPROVE_OPTION) {
 				imageFile = jfc.getSelectedFile();
-			} else return;
+			
 			if(imageFile.getPath().endsWith(".png")||imageFile.getPath().endsWith(".jpg")||imageFile.getPath().endsWith(".jpeg")) {	
 			imageLabel.setText(imageFile.getName());
-			}
+			}} else return;
 		});
 		imgPanel.add(chooserButton);
+		
+		
+		
 		topPanel.add(imgPanel);
 		
 		JPanel bufferPanel2 = new JPanel();
