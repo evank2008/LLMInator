@@ -101,7 +101,7 @@ public class LLMInator {
 					e1.printStackTrace();
 					JOptionPane.showMessageDialog(null, "error: "+e1.getMessage());
 				}
-			}).run();
+			}).start();
 		});
 		
 		
