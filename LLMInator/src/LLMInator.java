@@ -17,6 +17,7 @@ import javax.swing.filechooser.FileFilter;
 import com.anthropic.client.AnthropicClient;
 import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.models.messages.*;
+
 public class LLMInator {
 	
 	JFrame frame;
@@ -33,6 +34,7 @@ public class LLMInator {
 	}
 	public LLMInator() {
 		apiKey = System.getenv("CLAUDE_API_KEY");
+		//no secrets here
 		client = AnthropicOkHttpClient.builder().apiKey(apiKey).build();
 		frame = new JFrame("LLMInator");
 		panel = new JPanel();
@@ -91,7 +93,14 @@ public class LLMInator {
 		topPanel.add(sendButton);
 		sendButton.addActionListener(e->{
 			new Thread(()->{
-				output.setText("<html><body style='width: 600px;'>"+callAI()+"</html>");
+				try {
+					output.setText("<html><body style='width: 600px;'>"+
+					parseMessage(callAI(field.getText(), imageFile))+"</html>");
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+					JOptionPane.showMessageDialog(null, "error: "+e1.getMessage());
+				}
 			}).run();
 		});
 		
@@ -112,17 +121,15 @@ public class LLMInator {
 		frame.setVisible(true);
 	}
 	
-	String callAI() {
+	String callAI(String prompt, File img) throws IOException{
+		if(img==null) return callAI(prompt);
 		long maxTokens=512;
-		String prompt = field.getText();
-		boolean isJpeg = isJpeg(imageFile.getPath());
+		boolean isJpeg = isJpeg(img.getPath());
 		String b64;
-		if(imageFile!=null) {
-			try {
+			
 								
-				byte[] bytes = Files.readAllBytes(imageFile.toPath());
+				byte[] bytes = Files.readAllBytes(img.toPath());
 				b64 = Base64.getEncoder().encodeToString(bytes);
-				String imageType = isJpeg?"image/jpeg":"images/png";
 
 			
 		MessageCreateParams params = MessageCreateParams.builder()
@@ -144,18 +151,11 @@ public class LLMInator {
 		
 		Message msg = client.messages().create(params);
 		return msg.toString();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return callAINoImage();
 			}
-		} else { //no image
-			return callAINoImage();
-		}
-	}
-	String callAINoImage() {
+		
+	
+	String callAI(String prompt) {
 		long maxTokens=512;
-		String prompt = field.getText();
 		MessageCreateParams params = MessageCreateParams.builder()
 				.system("Respond only in plain text.")
 				.model(Model.CLAUDE_HAIKU_4_5)
@@ -163,6 +163,7 @@ public class LLMInator {
 				.maxTokens(maxTokens)
 				.build();
 		Message msg = client.messages().create(params);
+		System.out.println(msg.toString());
 		return msg.toString();
 	}
 	boolean isJpeg(String filePath) {
@@ -184,5 +185,8 @@ public class LLMInator {
 			e.printStackTrace();
 		}
 		throw new RuntimeException("Super GigaError");
+	}
+	String parseMessage(String rawMessage) {
+		return rawMessage.split("text=")[2].split(", type=text")[0];
 	}
 }
